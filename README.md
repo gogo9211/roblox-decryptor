@@ -1,7 +1,7 @@
 # roblox-decryptor
 
 ## UPDATE:
-I have added decryption for the INT3 emulators, since this is not included in the original release. Enjoy ur dumps! Below is an example of decompilation without int3s decrypted, vs with:
+I have added decryption for the INT3 emulators, since this is not included in the original release. Enjoy your dumps! Below is an example of decompilation without INT3s decrypted, vs with:
 ![Without](https://i.imgur.com/uSKhNX9.png)
 ![With](https://i.imgur.com/TZn0bIR.png)
 
