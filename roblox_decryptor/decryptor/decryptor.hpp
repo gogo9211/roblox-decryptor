@@ -20,13 +20,14 @@ namespace decryptor
 
 	private:
 		std::uintptr_t get_base_from_handle(void* handle) const;
-		
+		void decrypt_int3();
 	private:
 		void* hyperion_handle;
 		void* roblox_handle;
 
 		std::uintptr_t page_info_base;
-
+		std::uintptr_t int3_info_base;
+		bool is_long_info;
 		std::ofstream out_file;
 	};
 }

@@ -4,6 +4,7 @@
 #include "utils/pe.hpp"
 
 #include <Windows.h>
+#include <intrin.h>
 
 #include <vendor/chacha20/chacha20.hpp>
 
@@ -40,6 +41,24 @@ namespace decryptor
 
 		if (!page_info_lea)
 			return;
+
+		constexpr std::array<std::uint8_t, 13> long_sig = { 0x44, 0x89, 0xCC, 0x29, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0x45, 0x31 };
+		constexpr std::array<std::uint8_t, 12> short_sig = { 0x44, 0x89, 0xCC, 0x29, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0x45, 0x31 };
+
+		auto int3_info = utils::signature_scan(hyperion_code.base, hyperion_code.size, long_sig);
+		is_long_info = true;
+
+		if (!int3_info) {
+			int3_info = utils::signature_scan(hyperion_code.base, hyperion_code.size, short_sig);
+			if (!int3_info) {
+				std::printf("Failed to locate INT3 info!\n");
+				return;
+			}
+
+			is_long_info = false;
+		}
+
+		int3_info_base = int3_info;
 
 		// Plus one because we include the end of the shl reg, 4 instruction
 		page_info_lea += 1;
@@ -94,10 +113,46 @@ namespace decryptor
 			chacha20_xor(&ctx, reinterpret_cast<uint8_t*>(target_page), 0x1000);
 		}
 
+		decrypt_int3(); // Begin decrypting INT3 after the code.
+
 		// Seek to the first section after the PE headers, assuming it should be code
 		out_file.seekp(0x600);
 		out_file.write(reinterpret_cast<char*>(roblox_code.base), roblox_code.size);
 		out_file.flush();
+	}
+
+	void code_decryptor::decrypt_int3()
+	{
+		std::uintptr_t roblox_base = get_base_from_handle(roblox_handle);
+		std::uintptr_t hyperion_base = get_base_from_handle(hyperion_handle);
+
+		// Sorry for naming convention, it's just my style.
+		std::uint32_t arraySize = *(std::uint32_t*)(int3_info_base + 6 + is_long_info);
+		std::uintptr_t int3_lea = (int3_info_base + 13 + is_long_info);
+		std::uintptr_t decryptionTable = int3_lea + *(std::int32_t*)(int3_lea + 3) + 7;
+
+		for (std::uint32_t i = 0; i < arraySize; i++) {
+			std::uintptr_t baseValue = decryptionTable + ((std::uintptr_t)i * 0x18);
+			std::uintptr_t address = roblox_base + *(uint32_t*)(baseValue + 0xA);
+			std::uint16_t instrLength = (*(std::uint16_t*)(baseValue) >> 11) & 7; 
+
+			std::uint8_t decrypted[8]{ 0 };
+			std::uint32_t master_fish = *(std::uint8_t*)(baseValue + 2);
+			__m128i xor_fish = _mm_xor_si128(
+				_mm_insert_epi16(
+					_mm_cvtsi32_si128(master_fish | ((std::uint8_t)_rotr8(master_fish, 1) << 8)),
+					(std::uint8_t)_rotl8(master_fish, 6) | ((std::uint8_t)_rotl8(master_fish, 5) << 8),
+					1),
+				_mm_cvtsi32_si128(*(std::uint32_t*)(baseValue + 3))
+			);
+
+			*(std::uint32_t*)(decrypted) = _mm_cvtsi128_si32(xor_fish);
+			decrypted[4] = *(std::uint8_t*)(baseValue + 7) ^ _rotl8(master_fish, 4);
+			decrypted[5] = *(std::uint8_t*)(baseValue + 8) ^ _rotl8(master_fish, 3);
+			decrypted[6] = *(std::uint8_t*)(baseValue + 9) ^ _rotl8(master_fish, 2);
+
+			std::memcpy((void*)address, decrypted, instrLength);
+		}
 	}
 
 	std::uintptr_t code_decryptor::get_base_from_handle(void* handle) const
