@@ -1,5 +1,10 @@
 # roblox-decryptor
 
+## UPDATE:
+I have added decryption for the INT3 emulators, since this is not included in the original release. Enjoy your dumps! Below is an example of decompilation without INT3s decrypted, vs with:
+![Without](https://i.imgur.com/uSKhNX9.png)
+![With](https://i.imgur.com/TZn0bIR.png)
+
 ## What is this?
 This is a static decryptor for Roblox. Essentially, it decrypts all the code pages manually by fetching the encryption keys from Hyperion, instead of following the usual dynamic approach, which forces Hyperion to decrypt the pages at runtime.
 
