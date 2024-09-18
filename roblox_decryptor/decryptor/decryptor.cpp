@@ -42,8 +42,8 @@ namespace decryptor
 		if (!page_info_lea)
 			return;
 
-		constexpr std::array<std::uint8_t, 13> long_sig = { 0x44, 0x89, 0xCC, 0x29, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0x45, 0x31 };
-		constexpr std::array<std::uint8_t, 12> short_sig = { 0x44, 0x89, 0xCC, 0x29, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0x45, 0x31 };
+		constexpr std::array<std::uint8_t, 16> short_sig = { 0xBA, 0xCC, 0xCC, 0xCC, 0xCC, 0x45, 0xCC, 0xCC, 0x48, 0x8D, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xEB };
+		constexpr std::array<std::uint8_t, 17> long_sig = { 0x41, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0x45, 0xCC, 0xCC, 0x48, 0x8D, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xEB };
 
 		auto int3_info = utils::signature_scan(hyperion_code.base, hyperion_code.size, long_sig);
 		is_long_info = true;
@@ -127,8 +127,8 @@ namespace decryptor
 		std::uintptr_t hyperion_base = get_base_from_handle(hyperion_handle);
 
 		// Sorry for naming convention, it's just my style.
-		std::uint32_t arraySize = *(std::uint32_t*)(int3_info_base + 6 + is_long_info);
-		std::uintptr_t int3_lea = (int3_info_base + 13 + is_long_info);
+		std::uint32_t arraySize = *(std::uint32_t*)(int3_info_base + 1 + is_long_info);
+		std::uintptr_t int3_lea = (int3_info_base + 8 + is_long_info);
 		std::uintptr_t decryptionTable = int3_lea + *(std::int32_t*)(int3_lea + 3) + 7;
 
 		for (std::uint32_t i = 0; i < arraySize; i++) {
