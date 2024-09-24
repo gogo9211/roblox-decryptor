@@ -19,7 +19,7 @@ namespace decryptor::utils
 		parse_headers();
 	}
 
-	pe::range_t pe::get_section(const char* section) const
+	pe::section_t pe::get_section(const char* section) const
 	{
 		const auto nt_header = static_cast<IMAGE_NT_HEADERS*>(nt_headers);
 
@@ -32,11 +32,11 @@ namespace decryptor::utils
 				std::uintptr_t section_base = base + section_headers[i].VirtualAddress;
 				std::uint32_t section_size = section_headers[i].Misc.VirtualSize;
 
-				return { section_base, section_size };
+				return { { section_base, section_size }, { section_headers[i].PointerToRawData, section_headers[i].SizeOfRawData } };
 			}
 		}
 
-		return { 0, 0 };
+		return { 0, 0, 0, 0 };
 	}
 
 	std::uintptr_t pe::get_image_base() const

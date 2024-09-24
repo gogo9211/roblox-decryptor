@@ -25,13 +25,13 @@ namespace decryptor
 		const auto hyperion_code = hyperion_image.get_section(".byfron");
 
 		DWORD old;
-		VirtualProtect(reinterpret_cast<LPVOID>(roblox_code.base), roblox_code.size, PAGE_READWRITE, &old);
+		VirtualProtect(reinterpret_cast<LPVOID>(roblox_code.virtual_range.base), roblox_code.virtual_range.size, PAGE_READWRITE, &old);
 
 		// Attempt to automatically locate the page info array
 		constexpr std::array<std::uint8_t, 6> constant_sig = { 0x10, 0x27, 0x00, 0x00, 0xCC, 0x29 };
 		constexpr std::array<std::uint8_t, 3> lea_sig = { 0x04, 0xCC, 0x8D };
 
-		const auto constant_mov = utils::signature_scan(hyperion_code.base, hyperion_code.size, constant_sig);
+		const auto constant_mov = utils::signature_scan(hyperion_code.virtual_range.base, hyperion_code.virtual_range.size, constant_sig);
 
 		if (!constant_mov)
 			return;
@@ -78,7 +78,7 @@ namespace decryptor
 		const auto roblox_code = roblox_image.get_section(".text");
 		const auto hyperion_code = hyperion_image.get_section(".byfron");
 
-		for (auto target_page = roblox_code.base; target_page < roblox_code.base + roblox_code.size; target_page += 0x1000)
+		for (auto target_page = roblox_code.virtual_range.base; target_page < roblox_code.virtual_range.base + roblox_code.virtual_range.size; target_page += 0x1000)
 		{
 			const auto target_page_number = (target_page - roblox_image.get_image_base()) / 0x1000;
 			const auto target_page_info_base = page_info_base + (target_page_number % 10000) * 0x10;
@@ -94,9 +94,8 @@ namespace decryptor
 			chacha20_xor(&ctx, reinterpret_cast<uint8_t*>(target_page), 0x1000);
 		}
 
-		// Seek to the first section after the PE headers, assuming it should be code
-		out_file.seekp(0x600);
-		out_file.write(reinterpret_cast<char*>(roblox_code.base), roblox_code.size);
+		out_file.seekp(roblox_code.raw_range.base);
+		out_file.write(reinterpret_cast<char*>(roblox_code.virtual_range.base), roblox_code.virtual_range.size);
 		out_file.flush();
 	}
 

@@ -15,11 +15,17 @@ namespace decryptor::utils
 			std::uint32_t size;
 		};
 
+		struct section_t
+		{
+			range_t virtual_range;
+			range_t raw_range;
+		};
+
 	public:
 		pe(const char* mod);
 		pe(std::uintptr_t mod);
 
-		range_t get_section(const char* section) const;
+		section_t get_section(const char* section) const;
 
 		std::uintptr_t get_image_base() const;
 		std::uint32_t get_image_size() const;
