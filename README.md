@@ -1,5 +1,10 @@
 # roblox-decryptor
 
+> **⚠️ NOTE:**  
+> This project is **no longer compatible** with Hyperion versions **HYPV4.3.0.0 and above**.
+> 
+> At this time, I do not have plans to continue development on this project in its current form. However, I may consider releasing an alternative version with a dynamic approach in the future.
+
 ## What is this?
 This is a static decryptor for Roblox. Essentially, it decrypts all the code pages manually by fetching the encryption keys from Hyperion, instead of following the usual dynamic approach, which forces Hyperion to decrypt the pages at runtime.
 
